@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Acquisition Agent Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .metric-card.blue { border-left-color: #3b82f6; }
+        .metric-card.green { border-left-color: #10b981; }
+        .metric-card.purple { border-left-color: #8b5cf6; }
+        .metric-card.orange { border-left-color: #f59e0b; }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #64748b;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-change {
+            font-size: 0.8em;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .positive { background: #dcfce7; color: #166534; }
+        .negative { background: #fef2f2; color: #dc2626; }
+        
+        .section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-content {
+            padding: 30px;
+        }
+        
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .agent-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .agent-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .agent-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .agent-name {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .agent-status {
+            font-size: 0.8em;
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .agent-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .stat-label {
+            font-size: 0.7em;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        
+        .candidate-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .candidate-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .candidate-item:hover {
+            background: #e2e8f0;
+            transform: translateX(5px);
+        }
+        
+        .candidate-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .candidate-info {
+            flex: 1;
+        }
+        
+        .candidate-name {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 3px;
+        }
+        
+        .candidate-role {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+        
+        .candidate-score {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .alert-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 5px solid #f59e0b;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .alert-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .alert-list {
+            list-style: none;
+        }
+        
+        .alert-list li {
+            color: #78350f;
+            margin-bottom: 5px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .alert-list li::before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+        
+        .real-time-updates {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 300px;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .update-text {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .update-time {
+            font-size: 0.7em;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>System Active</span>
+            </div>
+            <h1>🤖 Talent Acquisition Agent Dashboard</h1>
+            <p>Autonomous HR Intelligence System - Real-time Recruitment Analytics</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- Key Metrics Section -->
+            <div class="metrics-grid">
+                <div class="metric-card blue">
+                    <div class="metric-value">247</div>
+                    <div class="metric-label">Active Candidates</div>
+                    <div class="metric-change positive">↗️ +23 this week</div>
+                </div>
+                <div class="metric-card green">
+                    <div class="metric-value">23</div>
+                    <div class="metric-label">Interviews Scheduled</div>
+                    <div class="metric-change positive">↗️ +8 today</div>
+                </div>
+                <div class="metric-card purple">
+                    <div class="metric-value">87%</div>
+                    <div class="metric-label">Resolution Rate</div>
+                    <div class="metric-change positive">↗️ +12% vs human-only</div>
+                </div>
+                <div class="metric-card orange">
+                    <div class="metric-value">2.3</div>
+                    <div class="metric-label">Days Avg. Time-to-Interview</div>
+                    <div class="metric-change positive">↗️ -65% improvement</div>
+                </div>
+            </div>
+            
+            <!-- Agent Activity Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">🤖 AI Agent Activity (Last 24 Hours)</h2>
+                </div>
+                <div class="section-content">
+                    <div class="agent-grid">
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">RS</div>
+                                <div>
+                                    <div class="agent-name">Resume Screening Agent</div>
+                                    <div class="agent-status">✅ Active</div>
+                                </div>
+                            </div>
+                            <div class="agent-stats">
+                                <div class="stat">
+                                    <div class="stat-value">156</div>
+                                    <div class="stat-label">Resumes Analyzed</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">94%</div>
+                                    <div class="stat-label">Accuracy</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">1.2s</div>
+                                    <div class="stat-label">Avg Time</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">IA</div>
+                                <div>
+                                    <div class="agent-name">Interview Agent</div>
+                                    <div class="agent-status">✅ Active</div>
+                                </div>
+                            </div>
+                            <div class="agent-stats">
+                                <div class="stat">
+                                    <div class="stat-value">12</div>
+                                    <div class="stat-label">Interviews Done</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">4.7</div>
+                                    <div class="stat-label">Satisfaction</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">15m</div>
+                                    <div class="stat-label">Avg Duration</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">SA</div>
+                                <div>
+                                    <div class="agent-name">Scheduling Agent</div>
+                                    <div class="agent-status">✅ Active</div>
+                                </div>
+                            </div>
+                            <div class="agent-stats">
+                                <div class="stat">
+                                    <div class="stat-value">45</div>
+                                    <div class="stat-label">Meetings Booked</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">98%</div>
+                                    <div class="stat-label">Success Rate</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">3</div>
+                                    <div class="stat-label">Conflicts Resolved</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="agent-card">
+                            <div class="agent-header">
+                                <div class="agent-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">CA</div>
+                                <div>
+                                    <div class="agent-name">Communication Agent</div>
+                                    <div class="agent-status">✅ Active</div>
+                                </div>
+                            </div>
+                            <div class="agent-stats">
+                                <div class="stat">
+                                    <div class="stat-value">89</div>
+                                    <div class="stat-label">Messages Sent</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">76%</div>
+                                    <div class="stat-label">Response Rate</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">5m</div>
+                                    <div class="stat-label">Avg Response</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Candidates Section -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">⭐ Top Candidates Today</h2>
+                </div>
+                <div class="section-content">
+                    <div class="candidate-list">
+                        <div class="candidate-item">
+                            <div class="candidate-avatar">SJ</div>
+                            <div class="candidate-info">
+                                <div class="candidate-name">Sarah Johnson</div>
+                                <div class="candidate-role">Senior Data Scientist • Google → Seeking</div>
+                            </div>
+                            <div class="candidate-score">96% Match</div>
+                        </div>
+                        
+                        <div class="candidate-item">
+                            <div class="candidate-avatar">MC</div>
+                            <div class="candidate-info">
+                                <div class="candidate-name">Michael Chen</div>
+                                <div class="candidate-role">ML Engineer • Microsoft → Interview Scheduled</div>
+                            </div>
+                            <div class="candidate-score">92% Match</div>
+                        </div>
+                        
+                        <div class="candidate-item">
+                            <div class="candidate-avatar">AP</div>
+                            <div class="candidate-info">
+                                <div class="candidate-name">Aisha Patel</div>
+                                <div class="candidate-role">AI Research Scientist • Stanford PhD → Screening</div>
+                            </div>
+                            <div class="candidate-score">89% Match</div>
+                        </div>
+                        
+                        <div class="candidate-item">
+                            <div class="candidate-avatar">DK</div>
+                            <div class="candidate-info">
+                                <div class="candidate-name">David Kim</div>
+                                <div class="candidate-role">Full Stack Developer • Tesla → Assessment</div>
+                            </div>
+                            <div class="candidate-score">87% Match</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Analytics -->
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">📈 Performance Analytics</h2>
+                </div>
+                <div class="section-content">
+                    <div class="metrics-grid">
+                        <div class="metric-card green">
+                            <div class="metric-value">$234K</div>
+                            <div class="metric-label">Cost Savings (30 days)</div>
+                            <div class="metric-change positive">↗️ 40% cost reduction</div>
+                        </div>
+                        <div class="metric-card blue">
+                            <div class="metric-value">4.6/5</div>
+                            <div class="metric-label">Candidate Satisfaction</div>
+                            <div class="metric-change positive">↗️ +0.8 improvement</div>
+                        </div>
+                        <div class="metric-card purple">
+                            <div class="metric-value">0.12</div>
+                            <div class="metric-label">Bias Score (Low Risk)</div>
+                            <div class="metric-change positive">↗️ Compliance ✓</div>
+                        </div>
+                        <div class="metric-card orange">
+                            <div class="metric-value">13%</div>
+                            <div class="metric-label">Escalation Rate</div>
+                            <div class="metric-change positive">↗️ -23% vs target</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-section">
+                        <div class="alert-title">🚨 System Alerts & Recommendations</div>
+                        <ul class="alert-list">
+                            <li>High-priority candidate Sarah Johnson requires immediate review</li>
+                            <li>Interview capacity at 85% - consider adding more slots for next week</li>
+                            <li>Bias detection flagged 2 screening decisions for human review</li>
+                            <li>Integration with ATS showing 99.2% sync success rate</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Real-time Update Notification -->
+    <div class="real-time-updates" id="liveUpdate">
+        <div class="update-text">🤖 New candidate application received</div>
+        <div class="update-time">Just now • Auto-screening in progress...</div>
+    </div>
+    
+    <script>
+        // Simulate real-time updates
+        const updates = [
+            "🤖 Resume screening completed for David Rodriguez (91% match)",
+            "📅 Interview scheduled: Sarah Johnson → Tomorrow 2:00 PM",
+            "✅ Background check completed for Michael Chen",
+            "📧 Follow-up email sent to 23 candidates",
+            "🎯 New job requirement analyzed: Senior DevOps Engineer",
+            "⚡ Assessment results: Aisha Patel scored 94/100",
+            "🔄 Integration sync completed with Workday ATS"
+        ];
+        
+        let updateIndex = 0;
+        
+        function showRandomUpdate() {
+            const updateDiv = document.getElementById('liveUpdate');
+            updateDiv.style.display = 'block';
+            updateDiv.querySelector('.update-text').textContent = updates[updateIndex];
+            updateDiv.querySelector('.update-time').textContent = `${Math.floor(Math.random() * 5) + 1} min ago • Processing...`;
+            
+            updateIndex = (updateIndex + 1) % updates.length;
+            
+            setTimeout(() => {
+                updateDiv.style.animation = 'slideIn 0.5s ease reverse';
+                setTimeout(() => {
+                    updateDiv.style.display = 'none';
+                    updateDiv.style.animation = 'slideIn 0.5s ease';
+                }, 500);
+            }, 4000);
+        }
+        
+        // Show updates every 8 seconds
+        setInterval(showRandomUpdate, 8000);
+        
+        // Initial update after 2 seconds
+        setTimeout(showRandomUpdate, 2000);
+        
+        // Add hover effects and animations
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+        
+        // Animate numbers on load
+        function animateNumbers() {
+            const numberElements = document.querySelectorAll('.metric-value');
+            numberElements.forEach(element => {
+                const finalValue = element.textContent;
+                const numericValue = parseInt(finalValue.replace(/[^\d.]/g, ''));
+                
+                if (!isNaN(numericValue)) {
+                    let currentValue = 0;
+                    const increment = numericValue / 30;
+                    const timer = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= numericValue) {
+                            element.textContent = finalValue;
+                            clearInterval(timer);
+                        } else {
+                            element.textContent = Math.floor(currentValue) + finalValue.replace(/[\d.]/g, '').replace(/^\d+/, '');
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
+        // Start animations when page loads
+        window.addEventListener('load', animateNumbers);
+    </script>
+</body>
+</html>

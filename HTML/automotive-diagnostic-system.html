@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automotive Diagnostic Assistant</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        @keyframes pulse {
+            0%, 70%, 100% { transform: scale(1); opacity: 1; }
+            35% { transform: scale(1.05); opacity: .75; }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-pulse { animation: pulse 2s infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .slide-in { animation: slideIn 0.5s ease-out; }
+        
+        .diagnostic-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .diagnostic-card:hover {
+            transform: translateX(4px);
+            border-left-color: #3B82F6;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-ok { background-color: #10B981; }
+        .status-warning { background-color: #F59E0B; }
+        .status-error { background-color: #EF4444; }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .confidence-meter {
+            background: linear-gradient(90deg, #EF4444 0%, #F59E0B 50%, #10B981 100%);
+            height: 8px;
+            border-radius: 4px;
+            position: relative;
+        }
+        
+        .confidence-indicator {
+            position: absolute;
+            top: -2px;
+            width: 4px;
+            height: 12px;
+            background: white;
+            border: 2px solid #1F2937;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="min-h-screen bg-gray-100">
+        <!-- Header -->
+        <header class="bg-white shadow-lg border-b border-gray-200">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a7.5 7.5 0 010-6.856l-1.097-1.097A9 9 0 1015.75 6.75a9 9 0 00-6.364 2.636l-1.097-1.097A7.5 7.5 0 0115.428 5.428z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-800">Automotive Diagnostic Assistant</h1>
+                            <p class="text-sm text-gray-600">RAG-Powered Troubleshooting System</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="status-indicator status-ok animate-pulse"></span>
+                            <span class="text-sm text-gray-600">AI System Online</span>
+                        </div>
+                        <button id="toggleMode" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Switch to Advanced Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Interface -->
+        <div id="basicMode" class="p-6">
+            <!-- Vehicle Information Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 slide-in">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Vehicle Information
+                    </h2>
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">VIN Verified</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">VIN</p>
+                        <p class="font-semibold text-gray-800">1HGBH41JXMN109186</p>
+                    </div>
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Vehicle</p>
+                        <p class="font-semibold text-gray-800">2021 Honda Accord Sport</p>
+                    </div>
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Engine</p>
+                        <p class="font-semibold text-gray-800">1.5L Turbo 4-Cyl</p>
+                    </div>
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Mileage</p>
+                        <p class="font-semibold text-gray-800">45,672 miles</p>
+                    </div>
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Last Service</p>
+                        <p class="font-semibold text-gray-800">2,400 miles ago</p>
+                    </div>
+                    <div class="diagnostic-card bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">Warranty Status</p>
+                        <p class="font-semibold text-green-600">Active</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Issue Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 slide-in">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    Current Issue
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                        <p class="text-sm text-red-700"><strong>Customer Complaint:</strong></p>
+                        <p class="text-red-800">"Car jerks during acceleration, check engine light on"</p>
+                    </div>
+                    <div class="bg-orange-50 border-l-4 border-orange-400 p-4">
+                        <p class="text-sm text-orange-700"><strong>Error Codes:</strong></p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <span class="bg-orange-200 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded">P0300</span>
+                            <span class="bg-orange-200 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded">P0301</span>
+                            <span class="bg-orange-200 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded">P0304</span>
+                            <span class="text-sm text-orange-700 ml-2">Multiple cylinder misfire detected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Diagnosis Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 slide-in">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        AI Diagnosis
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Confidence:</span>
+                        <div class="confidence-meter w-20 relative">
+                            <div class="confidence-indicator" style="left: 85%;"></div>
+                        </div>
+                        <span class="font-semibold text-green-600">89%</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-lg border border-purple-200">
+                    <h3 class="font-semibold text-purple-800 mb-3">Primary Cause: Ignition System Malfunction</h3>
+                    <ul class="space-y-2 text-sm text-purple-700">
+                        <li class="flex items-start">
+                            <span class="status-indicator status-error mt-1"></span>
+                            Cylinders 1 & 4 showing misfire pattern
+                        </li>
+                        <li class="flex items-start">
+                            <span class="status-indicator status-warning mt-1"></span>
+                            Common issue with 2019-2022 Honda 1.5L Turbo engines
+                        </li>
+                        <li class="flex items-start">
+                            <span class="status-indicator status-ok mt-1"></span>
+                            Recall Campaign: 21V-678 (Ignition coil replacement)
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Repair Procedure Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 slide-in">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2H9l-7-7 7-7z"/>
+                    </svg>
+                    Recommended Procedure
+                </h2>
+                
+                <div class="space-y-4">
+                    <!-- Step 1 -->
+                    <div class="border border-red-200 bg-red-50 p-4 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded mr-2">STEP 1</span>
+                            <h3 class="font-semibold text-red-800">Safety Check</h3>
+                            <svg class="w-4 h-4 ml-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                            </svg>
+                        </div>
+                        <ul class="text-sm text-red-700 space-y-1">
+                            <li>• Engine off, parking brake engaged</li>
+                            <li>• Ensure engine is cool before inspection</li>
+                        </ul>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="border border-blue-200 bg-blue-50 p-4 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded mr-2">STEP 2</span>
+                            <h3 class="font-semibold text-blue-800">Visual Inspection</h3>
+                        </div>
+                        <ul class="text-sm text-blue-700 space-y-1">
+                            <li>• Remove engine cover (10mm socket)</li>
+                            <li>• Inspect ignition coils for cracks or corrosion</li>
+                            <li>• Check for loose connections</li>
+                        </ul>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="border border-green-200 bg-green-50 p-4 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded mr-2">STEP 3</span>
+                            <h3 class="font-semibold text-green-800">Diagnostic Testing</h3>
+                            <div class="flex space-x-2 ml-4">
+                                <button class="bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition-colors">🎥 Video Guide</button>
+                                <button class="bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600 transition-colors">🔊 Voice Instructions</button>
+                            </div>
+                        </div>
+                        <ul class="text-sm text-green-700 space-y-1">
+                            <li>• Use ignition coil tester on cylinders 1 & 4</li>
+                            <li>• Expected resistance: 0.6-0.9 ohms</li>
+                            <li>• Replace if outside specification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parts & Estimate Card -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-lg p-6 slide-in">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        Parts Required
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-800">Ignition Coil</p>
+                                <p class="text-xs text-gray-600">Honda P/N: 30520-5AA-A02</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">Qty: 2</p>
+                                <p class="text-sm text-green-600">In Stock</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-800">Spark Plugs</p>
+                                <p class="text-xs text-gray-600">NGK DILKAR7G11GS</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">Qty: 4</p>
+                                <p class="text-sm text-green-600">In Stock</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-medium text-gray-800">Engine Cover Clips</p>
+                                <p class="text-xs text-gray-600">If damaged</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">Qty: 4</p>
+                                <p class="text-sm text-green-600">In Stock</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 slide-in">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                        Cost Estimate
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <span class="text-gray-700">Parts Cost</span>
+                            <span class="font-semibold text-gray-800">$285</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <span class="text-gray-700">Labor (1.2 hours)</span>
+                            <span class="font-semibold text-gray-800">$120</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border-2 border-yellow-300">
+                            <span class="font-semibold text-yellow-800">Total Estimate</span>
+                            <span class="font-bold text-yellow-800">$405</span>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg text-center">
+                            <p class="font-semibold">🔄 Warranty Coverage</p>
+                            <p class="text-sm">Covered under Recall 21V-678</p>
+                            <p class="text-xs">Customer pays: $0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Diagnostic Mode -->
+        <div id="advancedMode" class="p-6" style="display: none;">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Live Data Stream -->
+                <div class="bg-white rounded-xl shadow-lg p-6 slide-in">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Live Data Stream
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                            <div>
+                                <p class="font-medium text-gray-800">Engine RPM</p>
+                                <p class="text-xs text-gray-600">Target: 800-900</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">850</p>
+                                <span class="status-indicator status-ok"></span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                            <div>
+                                <p class="font-medium text-gray-800">Fuel Trim Short</p>
+                                <p class="text-xs text-gray-600">High - investigate</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">+8.2%</p>
+                                <span class="status-indicator status-warning"></span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                            <div>
+                                <p class="font-medium text-gray-800">Ignition Timing</p>
+                                <p class="text-xs text-gray-600">Normal range</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">12° BTDC</p>
+                                <span class="status-indicator status-ok"></span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <div>
+                                <p class="font-medium text-gray-800">Cylinder 1 Misfire</p>
+                                <p class="text-xs text-gray-600">counts/1000 rev</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">47</p>
+                                <span class="status-indicator status-error"></span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                            <div>
+                                <p class="font-medium text-gray-800">Cylinder 4 Misfire</p>
+                                <p class="text-xs text-gray-600">counts/1000 rev</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">52</p>
+                                <span class="status-indicator status-error"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights -->
+                <div class="bg-white rounded-xl shadow-lg p-6 slide-in">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        AI Insights
+                    </h2>
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200 mb-4">
+                        <p class="text-sm text-purple-700 mb-2">Based on <strong>847 similar cases</strong> in our database:</p>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-purple-600">Ignition coil replacement</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-purple-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-purple-700">78%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-purple-600">Fuel injector cleaning</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-purple-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-purple-700">15%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-purple-600">ECM issues</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-20 bg-purple-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: 7%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium text-purple-700">7%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h3 class="font-semibold text-blue-800 mb-2">🔧 Next Steps</h3>
+                        <ol class="text-sm text-blue

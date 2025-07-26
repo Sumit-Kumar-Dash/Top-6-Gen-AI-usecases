@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Sentiment Intelligence Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .product-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .product-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .product-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .product-btn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .metric-trend {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        .trend-up { background: #d4edda; color: #155724; }
+        .trend-down { background: #f8d7da; color: #721c24; }
+        .trend-neutral { background: #fff3cd; color: #856404; }
+
+        .aspect-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .aspect-item:last-child { border-bottom: none; }
+
+        .aspect-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .sentiment-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .sentiment-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .positive { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
+        .mixed { background: linear-gradient(90deg, #FF9800, #FFC107); }
+        .negative { background: linear-gradient(90deg, #f44336, #FF7043); }
+
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .emotion-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .emotion-item:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .emotion-emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .alerts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .alert:hover { transform: translateX(5px); }
+
+        .alert-critical { background: #f8d7da; border-color: #dc3545; }
+        .alert-warning { background: #fff3cd; border-color: #ffc107; }
+        .alert-info { background: #d1ecf1; border-color: #17a2b8; }
+
+        .competitor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .competitor-card {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .competitor-card:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .competitor-score {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .reviews-feed {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .review-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .review-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .review-sentiment {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .review-positive { background: #d4edda; color: #155724; }
+        .review-negative { background: #f8d7da; color: #721c24; }
+        .review-mixed { background: #fff3cd; color: #856404; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 8px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .insight-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .insight-description {
+            color: #6c757d;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 E-COMMERCE SENTIMENT INTELLIGENCE</h1>
+            <p style="font-size: 1.1em; color: #6c757d; margin-bottom: 20px;">
+                <span class="live-indicator"></span>
+                Real-time Analysis Dashboard - Advanced NLP & Business Intelligence
+            </p>
+            <div class="product-selector">
+                <button class="product-btn active" onclick="switchProduct('iphone')">📱 iPhone 15 Pro</button>
+                <button class="product-btn" onclick="switchProduct('samsung')">📱 Galaxy S24</button>
+                <button class="product-btn" onclick="switchProduct('pixel')">📱 Pixel 8 Pro</button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <!-- Performance Overview -->
+            <div class="card">
+                <h3>🎯 Product Performance Overview</h3>
+                <div class="metric-container">
+                    <div>
+                        <div style="font-size: 0.9em; color: #6c757d;">Overall Sentiment</div>
+                        <div class="metric-value" id="overall-sentiment">78%</div>
+                    </div>
+                    <div class="metric-trend trend-up" id="sentiment-trend">+5% ↗️</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #28a745;" id="review-count">12,847</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">Reviews (30d)</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #17a2b8;" id="fake-rate">8%</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">Fake Rate</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: #667eea;" id="nps-score">+42</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">NPS Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aspect-Based Analysis -->
+            <div class="card">
+                <h3>🔍 Aspect-Based Sentiment</h3>
+                <div id="aspects-container">
+                    <div class="aspect-item">
+                        <div class="aspect-name">📱 Design & Build</div>
+                        <div class="sentiment-bar"><div class="sentiment-fill positive" style="width: 85%"></div></div>
+                        <span style="font-weight: bold; color: #28a745;">85%</span>
+                    </div>
+                    <div class="aspect-item">
+                        <div class="aspect-name">🔋 Battery Life</div>
+                        <div class="sentiment-bar"><div class="sentiment-fill mixed" style="width: 62%"></div></div>
+                        <span style="font-weight: bold; color: #ffc107;">62% ⚠️</span>
+                    </div>
+                    <div class="aspect-item">
+                        <div class="aspect-name">📸 Camera Quality</div>
+                        <div class="sentiment-bar"><div class="sentiment-fill positive" style="width: 91%"></div></div>
+                        <span style="font-weight: bold; color: #28a745;">91% ⭐</span>
+                    </div>
+                    <div class="aspect-item">
+                        <div class="aspect-name">💰 Value for Money</div>
+                        <div class="sentiment-bar"><div class="sentiment-fill negative" style="width: 45%"></div></div>
+                        <span style="font-weight: bold; color: #dc3545;">45% ❌</span>
+                    </div>
+                    <div class="aspect-item">
+                        <div class="aspect-name">🚀 Performance</div>
+                        <div class="sentiment-bar"><div class="sentiment-fill positive" style="width: 88%"></div></div>
+                        <span style="font-weight: bold; color: #28a745;">88%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emotion Detection -->
+            <div class="card">
+                <h3>😊 Emotion Distribution</h3>
+                <div class="emotion-grid">
+                    <div class="emotion-item">
+                        <div class="emotion-emoji">😊</div>
+                        <div style="font-weight: bold;">Joy/Satisfaction</div>
+                        <div style="font-size: 1.2em; color: #28a745;">34%</div>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="emotion-emoji">🤩</div>
+                        <div style="font-weight: bold;">Excitement</div>
+                        <div style="font-size: 1.2em; color: #17a2b8;">21%</div>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="emotion-emoji">😐</div>
+                        <div style="font-weight: bold;">Neutral</div>
+                        <div style="font-size: 1.2em; color: #6c757d;">28%</div>
+                    </div>
+                    <div class="emotion-item">
+                        <div class="emotion-emoji">😤</div>
+                        <div style="font-weight: bold;">Frustration</div>
+                        <div style="font-size: 1.2em; color: #ffc107;">12%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Critical Alerts -->
+            <div class="card">
+                <h3>🚨 Critical Alerts (24h)</h3>
+                <div class="alerts-container">
+                    <div class="alert alert-warning">
+                        <span>⚠️</span>
+                        <div>
+                            <strong>Battery complaints increased 23%</strong>
+                            <div style="font-size: 0.9em; color: #856404;">Heavy usage scenarios driving negative sentiment</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-critical">
+                        <span>📈</span>
+                        <div>
+                            <strong>Price sensitivity mentions up 15%</strong>
+                            <div style="font-size: 0.9em; color: #721c24;">Value proposition concerns trending</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <span>🔍</span>
+                        <div>
+                            <strong>Competitor mentions +8%</strong>
+                            <div style="font-size: 0.9em; color: #0c5460;">Android alternatives being discussed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analysis Tabs -->
+        <div class="card">
+            <div class="tabs" id="analysis-tabs">
+                <div class="tab active" onclick="switchTab('trend')">📈 Trend Analysis</div>
+                <div class="tab" onclick="switchTab('competitive')">🏆 Competitive Intel</div>
+                <div class="tab" onclick="switchTab('reviews')">💬 Live Reviews</div>
+                <div class="tab" onclick="switchTab('insights')">🎯 AI Insights</div>
+            </div>
+
+            <div class="tab-content active" id="trend-content">
+                <h3>📈 Sentiment Trend Analysis (90 Days)</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <div style="margin-top: 20px;">
+                    <h4>🔋 Battery Life Deep Dive</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.5em; color: #dc3545;">38%</div>
+                            <div style="font-size: 0.9em; color: #6c757d;">Negative Reviews</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.5em; color: #ffc107;">15%</div>
+                            <div style="font-size: 0.9em; color: #6c757d;">Mixed Reviews</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                            <div style="font-size: 1.5em; color: #28a745;">47%</div>
+                            <div style="font-size: 0.9em; color: #6c757d;">Positive Reviews</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="competitive-content">
+                <h3>🏆 Competitive Sentiment Comparison</h3>
+                <div class="competitor-grid">
+                    <div class="competitor-card">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold;">iPhone 15 Pro</div>
+                        <div class="competitor-score" style="color: #28a745;">78%</div>
+                        <div style="font-size: 0.8em; color: #28a745;">Market Leader</div>
+                    </div>
+                    <div class="competitor-card">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold;">Galaxy S24</div>
+                        <div class="competitor-score" style="color: #17a2b8;">74%</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">-4% vs iPhone</div>
+                    </div>
+                    <div class="competitor-card">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold;">Pixel 8 Pro</div>
+                        <div class="competitor-score" style="color: #ffc107;">71%</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">-7% vs iPhone</div>
+                    </div>
+                    <div class="competitor-card">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📱</div>
+                        <div style="font-weight: bold;">OnePlus 12</div>
+                        <div class="competitor-score" style="color: #dc3545;">69%</div>
+                        <div style="font-size: 0.8em; color: #6c757d;">-9% vs iPhone</div>
+                    </div>
+                </div>
+                <div style="margin-top: 25px;">
+                    <div class="chart-container">
+                        <canvas id="competitorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="reviews-content">
+                <h3>💬 Live Reviews Feed <span class="live-indicator"></span></h3>
+                <div class="reviews-feed" id="reviews-feed">
+                    <div class="review-item">
+                        <div class="review-sentiment review-positive">Positive</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">⭐⭐⭐⭐⭐ Amazing camera quality!</div>
+                        <div style="font-size: 0.9em; color: #6c757d; margin-bottom: 8px;">2 minutes ago</div>
+                        <div>"The camera on this iPhone 15 Pro is absolutely incredible. Night mode photos look professional quality. Battery lasts all day with moderate usage."</div>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-sentiment review-negative">Negative</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">⭐⭐ Battery drains too fast</div>
+                        <div style="font-size: 0.9em; color: #6c757d; margin-bottom: 8px;">5 minutes ago</div>
+                        <div>"Great phone overall but the battery life is disappointing. Barely makes it through a full day with heavy gaming and video recording."</div>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-sentiment review-mixed">Mixed</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">⭐⭐⭐⭐ Good but expensive</div>
+                        <div style="font-size: 0.9em; color: #6c757d; margin-bottom: 8px;">8 minutes ago</div>
+                        <div>"Excellent build quality and performance. Camera is top-notch. However, the price is really steep compared to Android alternatives with similar specs."</div>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-sentiment review-positive">Positive</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">⭐⭐⭐⭐⭐ Perfect upgrade!</div>
+                        <div style="font-size: 0.9em; color: #6c757d; margin-bottom: 8px;">12 minutes ago</div>
+                        <div>"Upgraded from iPhone 13 and the difference is noticeable. Faster performance, better battery life, and the titanium build feels premium."</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="insights-content">
+                <h3>🎯 AI-Generated Business Insights</h3>
+                <div class="insights-grid">
+                    <div class="insight-card">
+                        <div class="insight-title">🔋 Battery Optimization Opportunity</div>
+                        <div class="insight-description">
+                            Power users (23% of customers) show 34% positive sentiment for battery life. Focus firmware updates on gaming and video recording optimization to improve satisfaction in this high-value segment.
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">📢 Pricing Communication Strategy</div>
+                        <div class="insight-description">
+                            Value proposition concerns increased 15% this week. Develop marketing content highlighting long-term ecosystem benefits and trade-in programs to address price sensitivity.
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">🏆 Competitive Advantage Leverage</div>
+                        <div class="insight-description">
+                            Camera quality leads competitors by 12%. Create comparison marketing content showcasing computational photography capabilities and night mode performance.
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">⚠️ Emerging Issue Alert</div>
+                        <div class="insight-description">
+                            iOS update complaints correlated with battery issues. Coordinate with software team to address power management in next patch release.
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">📈 Growth Opportunity</div>
+                        <div class="insight-description">
+                            Business users (25% segment) show mixed sentiment (65% positive). Develop B2B-focused features and marketing to capture this underserved segment.
+                        </div>
+                    </div>
+                    <div class="insight-card">
+                        <div class="insight-title">🎯 Customer Segmentation Insight</div>
+                        <div class="insight-description">
+                            Casual users (52% of reviews) have 78% positive sentiment. Focus retention efforts on this satisfied majority while addressing power user concerns.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Product data
+        const productData = {
+            iphone: {
+                sentiment: 78,
+                trend: '+5% ↗️',
+                reviews: '12,847',
+                fake: '8%',
+                nps: '+42',
+                aspects: [
+                    { name: '📱 Design & Build', value: 85, type: 'positive' },
+                    { name: '🔋 Battery Life', value: 62, type: 'mixed', alert: ' ⚠️' },
+                    { name: '📸 Camera Quality', value: 91, type: 'positive', alert: ' ⭐' },
+                    { name: '💰 Value for Money', value: 45, type: 'negative', alert: ' ❌' },
+                    { name: '🚀 Performance', value: 88, type: 'positive' }
+                ]
+            },
+            samsung: {
+                sentiment: 74,
+                trend: '+2% ↗️',
+                reviews: '9,432',
+                fake: '12%',
+                nps: '+38',
+                aspects: [
+                    { name: '📱 Design & Build', value: 82, type: 'positive' },
+                    { name: '🔋 Battery Life', value: 78, type: 'positive' },
+                    { name: '📸 Camera Quality', value: 79, type: 'positive' },
+                    { name: '💰 Value for Money', value: 68, type: 'mixed' },
+                    { name: '🚀 Performance', value: 86, type: 'positive' }
+                ]
+            },
+            pixel: {
+                sentiment: 71,
+                trend: '-1% ↘️',
+                reviews: '6,234',
+                fake: '6%',
+                nps: '+35',
+                aspects: [
+                    { name: '📱 Design & Build', value: 75, type: 'positive' },
+                    { name: '🔋 Battery Life', value: 69, type: 'mixed' },
+                    { name: '📸 Camera Quality', value: 89, type: 'positive', alert: ' ⭐' },
+                    { name: '💰 Value for Money', value: 72, type: 'positive' },
+                    { name: '🚀 Performance', value: 81, type: 'positive' }
+                ]
+            }
+        };
+
+        let trendChart, competitorChart;
+
+        // Initialize charts
+        function initCharts() {
+            // Trend Chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10', 'Week 11', 'Week 12'],
+                    datasets: [{
+                        label: 'Overall Sentiment',
+                        data: [75, 76, 78, 79, 77, 75, 73, 71, 69, 67, 65, 62],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Battery Life Sentiment',
+                        data: [71, 70, 72, 71, 68, 66, 64, 63, 61, 60, 62, 62],
+                        borderColor: '#f44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 50,
+                            max: 85
+                        }
+                    }
+                }
+            });
+
+            // Competitor Chart
+            const competitorCtx = document.getElementById('competitorChart').getContext('2d');
+            competitorChart = new Chart(competitorCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Camera', 'Battery', 'Performance', 'Design', 'Value', 'User Experience'],
+                    datasets: [{
+                        label: 'iPhone 15 Pro',
+                        data: [91, 62, 88, 85, 45, 89],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        pointBackgroundColor: '#667eea'
+                    }, {
+                        label: 'Galaxy S24',
+                        data: [79, 78, 86, 82, 68, 74],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        pointBackgroundColor: '#28a745'
+                    }, {
+                        label: 'Pixel 8 Pro',
+                        data: [89, 69, 81, 75, 72, 71],
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                        pointBackgroundColor: '#ffc107'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Switch product function
+        function switchProduct(product) {
+            // Update button states
+            document.querySelectorAll('.product-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update data
+            const data = productData[product];
+            document.getElementById('overall-sentiment').textContent = data.sentiment + '%';
+            document.getElementById('sentiment-trend').textContent = data.trend;
+            document.getElementById('review-count').textContent = data.reviews;
+            document.getElementById('fake-rate').textContent = data.fake;
+            document.getElementById('nps-score').textContent = data.nps;
+
+            // Update aspects
+            const aspectsContainer = document.getElementById('aspects-container');
+            aspectsContainer.innerHTML = '';
+            data.aspects.forEach(aspect => {
+                const aspectItem = document.createElement('div');
+                aspectItem.className = 'aspect-item';
+                aspectItem.innerHTML = `
+                    <div class="aspect-name">${aspect.name}</div>
+                    <div class="sentiment-bar"><div class="sentiment-fill ${aspect.type}" style="width: ${aspect.value}%"></div></div>
+                    <span style="font-weight: bold; color: ${getColorForType(aspect.type)};">${aspect.value}%${aspect.alert || ''}</span>
+                `;
+                aspectsContainer.appendChild(aspectItem);
+            });
+
+            // Update trend indicator
+            const trendElement = document.getElementById('sentiment-trend');
+            if (data.trend.includes('↗️')) {
+                trendElement.className = 'metric-trend trend-up';
+            } else if (data.trend.includes('↘️')) {
+                trendElement.className = 'metric-trend trend-down';
+            } else {
+                trendElement.className = 'metric-trend trend-neutral';
+            }
+        }
+
+        // Get color for sentiment type
+        function getColorForType(type) {
+            switch(type) {
+                case 'positive': return '#28a745';
+                case 'mixed': return '#ffc107';
+                case 'negative': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        // Switch tab function
+        function switchTab(tabName) {
+            // Update tab states
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content visibility
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-content').classList.add('active');
+        }
+
+        // Simulate live reviews
+        function addLiveReview() {
+            const reviews = [
+                {
+                    sentiment: 'positive',
+                    rating: '⭐⭐⭐⭐⭐',
+                    title: 'Love the camera!',
+                    text: 'The photo quality is outstanding, especially in low light conditions. Very impressed with the night mode capabilities.'
+                },
+                {
+                    sentiment: 'negative',
+                    rating: '⭐⭐',
+                    title: 'Battery issues',
+                    text: 'Phone gets hot during gaming and battery drains quickly. Expected better performance for the price.'
+                },
+                {
+                    sentiment: 'mixed',
+                    rating: '⭐⭐⭐⭐',
+                    title: 'Good but pricey',
+                    text: 'Great phone with excellent build quality, but the price is quite high compared to similar Android phones.'
+                },
+                {
+                    sentiment: 'positive',
+                    rating: '⭐⭐⭐⭐⭐',
+                    title: 'Smooth performance',
+                    text: 'Everything runs buttery smooth. The A17 Pro chip handles everything I throw at it without any lag.'
+                }
+            ];
+
+            const randomReview = reviews[Math.floor(Math.random() * reviews.length)];
+            const reviewsFeed = document.getElementById('reviews-feed');
+            
+            const reviewItem = document.createElement('div');
+            reviewItem.className = 'review-item';
+            reviewItem.style.opacity = '0';
+            reviewItem.style.transform = 'translateY(-20px)';
+            
+            reviewItem.innerHTML = `
+                <div class="review-sentiment review-${randomReview.sentiment}">${randomReview.sentiment.charAt(0).toUpperCase() + randomReview.sentiment.slice(1)}</div>
+                <div style="font-weight: bold; margin-bottom: 5px;">${randomReview.rating} ${randomReview.title}</div>
+                <div style="font-size: 0.9em; color: #6c757d; margin-bottom: 8px;">Just now</div>
+                <div>${randomReview.text}</div>
+            `;
+            
+            reviewsFeed.insertBefore(reviewItem, reviewsFeed.firstChild);
+            
+            // Animate in
+            setTimeout(() => {
+                reviewItem.style.transition = 'all 0.5s ease';
+                reviewItem.style.opacity = '1';
+                reviewItem.style.transform = 'translateY(0)';
+            }, 100);
+            
+            // Remove oldest review if more than 6
+            if (reviewsFeed.children.length > 6) {
+                reviewsFeed.removeChild(reviewsFeed.lastChild);
+            }
+        }
+
+        // Animate metrics
+        function animateMetrics() {
+            const metrics = document.querySelectorAll('.metric-value');
+            metrics.forEach(metric => {
+                const finalValue = metric.textContent;
+                const numericValue = parseInt(finalValue);
+                
+                if (!isNaN(numericValue)) {
+                    let currentValue = 0;
+                    const increment = numericValue / 50;
+                    const timer = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= numericValue) {
+                            currentValue = numericValue;
+                            clearInterval(timer);
+                        }
+                        metric.textContent = Math.floor(currentValue) + (finalValue.includes('%') ? '%' : '');
+                    }, 30);
+                }
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            animateMetrics();
+            
+            // Add live reviews every 10 seconds
+            setInterval(addLiveReview, 10000);
+            
+            // Animate sentiment bars
+            setTimeout(() => {
+                document.querySelectorAll('.sentiment-fill').forEach(fill => {
+                    fill.style.transition = 'width 1s ease';
+                });
+            }, 500);
+        });
+
+        // Add some interactive hover effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effect to cards
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Add click animation to metric containers
+            document.querySelectorAll('.metric-container').forEach(container => {
+                container.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
+            });
+        });
+
+        // Real-time data simulation
+        function simulateRealTimeUpdates() {
+            setInterval(() => {
+                // Randomly update sentiment values slightly
+                const currentSentiment = parseInt(document.getElementById('overall-sentiment').textContent);
+                const change = (Math.random() - 0.5) * 2; // -1 to +1
+                const newSentiment = Math.max(60, Math.min(85, currentSentiment + change));
+                
+                document.getElementById('overall-sentiment').textContent = Math.round(newSentiment) + '%';
+                
+                // Update trend indicator
+                const trendElement = document.getElementById('sentiment-trend');
+                if (change > 0.5) {
+                    trendElement.textContent = '+' + Math.round(change) + '% ↗️';
+                    trendElement.className = 'metric-trend trend-up';
+                } else if (change < -0.5) {
+                    trendElement.textContent = Math.round(change) + '% ↘️';
+                    trendElement.className = 'metric-trend trend-down';
+                } else {
+                    trendElement.textContent = '0% →';
+                    trendElement.className = 'metric-trend trend-neutral';
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        // Start real-time simulation
+        setTimeout(simulateRealTimeUpdates, 5000);
+    </script>
+</body>
+</html>
